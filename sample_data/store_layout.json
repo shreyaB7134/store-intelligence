@@ -1,0 +1,100 @@
+{
+  "store_id": "ST1008",
+  "store_name": "Purplle Store - Sample",
+  "camera_count": 4,
+  "zones": [
+    {
+      "zone_id": "PURPLLE_ST1008_Z_ENTRY",
+      "name": "Store Entry",
+      "zone_type": "ENTRY",
+      "is_revenue_zone": false,
+      "polygon": [
+        {"x": 0, "y": 0},
+        {"x": 640, "y": 0},
+        {"x": 640, "y": 80},
+        {"x": 0, "y": 80}
+      ]
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z01",
+      "name": "Left Shelf - Skincare",
+      "zone_type": "SHELF",
+      "is_revenue_zone": true,
+      "sku_zone": "SKINCARE",
+      "polygon": [
+        {"x": 0, "y": 80},
+        {"x": 200, "y": 80},
+        {"x": 200, "y": 320},
+        {"x": 0, "y": 320}
+      ]
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z02",
+      "name": "Center Display - Makeup",
+      "zone_type": "DISPLAY",
+      "is_revenue_zone": true,
+      "sku_zone": "MAKEUP",
+      "polygon": [
+        {"x": 200, "y": 80},
+        {"x": 440, "y": 80},
+        {"x": 440, "y": 320},
+        {"x": 200, "y": 320}
+      ]
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z03",
+      "name": "Right Shelf - Haircare",
+      "zone_type": "SHELF",
+      "is_revenue_zone": true,
+      "sku_zone": "HAIRCARE",
+      "polygon": [
+        {"x": 440, "y": 80},
+        {"x": 640, "y": 80},
+        {"x": 640, "y": 320},
+        {"x": 440, "y": 320}
+      ]
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z04",
+      "name": "Lipstick Aisle",
+      "zone_type": "SHELF",
+      "is_revenue_zone": true,
+      "sku_zone": "LIPSTICK",
+      "polygon": [
+        {"x": 0, "y": 320},
+        {"x": 320, "y": 320},
+        {"x": 320, "y": 400},
+        {"x": 0, "y": 400}
+      ]
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z_BILLING_01",
+      "name": "Billing Counter Queue",
+      "zone_type": "BILLING",
+      "is_revenue_zone": true,
+      "polygon": [
+        {"x": 320, "y": 320},
+        {"x": 640, "y": 320},
+        {"x": 640, "y": 480},
+        {"x": 320, "y": 480}
+      ]
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z_EXIT",
+      "name": "Store Exit",
+      "zone_type": "EXIT",
+      "is_revenue_zone": false,
+      "polygon": [
+        {"x": 0, "y": 400},
+        {"x": 320, "y": 400},
+        {"x": 320, "y": 480},
+        {"x": 0, "y": 480}
+      ]
+    }
+  ],
+  "entry_line": {
+    "x1": 0, "y1": 80,
+    "x2": 640, "y2": 80,
+    "entry_side": "bottom"
+  }
+}

@@ -1,0 +1,80 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: si_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-si_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-si_password}
+      POSTGRES_DB: ${POSTGRES_DB:-store_intelligence}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-si_user} -d ${POSTGRES_DB:-store_intelligence}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - si_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: si_api
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-si_user}:${POSTGRES_PASSWORD:-si_password}@postgres:5432/${POSTGRES_DB:-store_intelligence}
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      DEBUG: ${DEBUG:-false}
+      STORE_ID: ${STORE_ID:-ST1008}
+      STALE_FEED_THRESHOLD_SECONDS: ${STALE_FEED_THRESHOLD_SECONDS:-300}
+      QUEUE_SPIKE_MULTIPLIER: ${QUEUE_SPIKE_MULTIPLIER:-2.0}
+      CONVERSION_DROP_THRESHOLD: ${CONVERSION_DROP_THRESHOLD:-0.5}
+      DEAD_ZONE_MINUTES: ${DEAD_ZONE_MINUTES:-30}
+      POS_MATCH_WINDOW_SECONDS: ${POS_MATCH_WINDOW_SECONDS:-300}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - si_network
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: si_dashboard
+    environment:
+      API_BASE_URL: http://api:8000
+      STORE_ID: ${STORE_ID:-ST1008}
+      DASHBOARD_REFRESH_SECONDS: ${DASHBOARD_REFRESH_SECONDS:-5}
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - si_network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    name: si_pgdata
+
+networks:
+  si_network:
+    name: si_network
+    driver: bridge
