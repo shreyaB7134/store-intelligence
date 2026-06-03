@@ -108,6 +108,29 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database tables created (or already exist)")
 
+    # Seeding POS data if empty
+    try:
+        from sqlalchemy import select, func
+        from app.domain.models import POSTransaction
+        from app.services.pos_correlator import load_pos_data
+        from pathlib import Path
+
+        factory = get_session_factory()
+        async with factory() as session:
+            result = await session.execute(select(func.count(POSTransaction.id)))
+            count = result.scalar() or 0
+            if count == 0:
+                csv_path = Path(__file__).resolve().parent.parent.parent / "sample_data" / "POS - sample transactionsb1e826f.csv"
+                if csv_path.exists():
+                    logger.info("Seeding POS transactions from %s...", csv_path)
+                    inserted = await load_pos_data(session, csv_path)
+                    await session.commit()
+                    logger.info("Seeded %d POS transactions", inserted)
+                else:
+                    logger.warning("POS sample CSV not found at %s", csv_path)
+    except Exception as e:
+        logger.error("Failed to seed POS database: %s", e)
+
 
 async def check_db_health() -> bool:
     """

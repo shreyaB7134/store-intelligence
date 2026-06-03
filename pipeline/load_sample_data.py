@@ -13,10 +13,14 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-SAMPLE_EVENTS_PATH = Path("../sample_eventsbe42122.jsonl")
-API_URL = "http://localhost:8000"
-STORE_ID = "ST1008"
-CAMERA_ID = "CAM1"
+import os
+
+# Resolve path relative to the script location
+SCRIPT_DIR = Path(__file__).resolve().parent
+SAMPLE_EVENTS_PATH = Path(os.getenv("SAMPLE_EVENTS_PATH", SCRIPT_DIR.parent / "sample_data" / "sample_eventsbe42122.jsonl"))
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+STORE_ID = os.getenv("STORE_ID", "ST1008")
+CAMERA_ID = os.getenv("CAMERA_ID", "CAM1")
 
 
 def parse_sample_event(raw: dict) -> dict | None:
