@@ -1,0 +1,12 @@
+[run]
+source = app
+omit =
+    */tests/*
+    */migrations/*
+
+[report]
+fail_under = 70
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.:
