@@ -50,7 +50,9 @@ st.markdown("""
 def fetch(endpoint: str) -> Optional[dict]:
     """Fetch JSON from the API, returning None on any error."""
     try:
-        r = httpx.get(f"{API_BASE}{endpoint}", timeout=5.0)
+        # millisecond timestamp to bust CDN/proxy caches
+        params = {"_t": int(time.time() * 1000)}
+        r = httpx.get(f"{API_BASE}{endpoint}", params=params, timeout=5.0)
         if r.status_code == 200:
             return r.json()
     except Exception:

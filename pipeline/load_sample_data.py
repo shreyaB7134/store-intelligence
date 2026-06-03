@@ -46,6 +46,10 @@ def parse_sample_event(raw: dict) -> dict | None:
 
     try:
         ts = datetime.fromisoformat(ts_str).replace(tzinfo=timezone.utc)
+        # Shift sample timestamps from March 8 to April 10 and add 1h 8m to align with POS transaction times
+        if ts.year == 2026 and ts.month == 3 and ts.day == 8:
+            from datetime import timedelta
+            ts = ts.replace(month=4, day=10) + timedelta(hours=1, minutes=8)
     except ValueError:
         return None
 

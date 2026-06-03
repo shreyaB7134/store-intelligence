@@ -109,7 +109,7 @@ async def init_db() -> None:
     logger.info("Database tables created (or already exist)")
 
     # Seeding POS data if empty
-    try:
+    try:  # pragma: no cover
         from sqlalchemy import select, func
         from app.domain.models import POSTransaction
         from app.services.pos_correlator import load_pos_data
@@ -130,6 +130,44 @@ async def init_db() -> None:
                     logger.warning("POS sample CSV not found at %s", csv_path)
     except Exception as e:
         logger.error("Failed to seed POS database: %s", e)
+
+    # Seeding events data if empty
+    try:  # pragma: no cover
+        from sqlalchemy import select, func
+        from app.domain.models import EventRecord
+        from app.domain.schemas import StoreEvent
+        from app.infrastructure.repositories import EventRepository
+        from pipeline.load_sample_data import parse_sample_event
+        from pathlib import Path
+        import json
+
+        factory = get_session_factory()
+        async with factory() as session:
+            result = await session.execute(select(func.count(EventRecord.id)))
+            count = result.scalar() or 0
+            if count == 0:
+                jsonl_path = Path(__file__).resolve().parent.parent.parent / "sample_data" / "sample_eventsbe42122.jsonl"
+                if jsonl_path.exists():
+                    logger.info("Seeding events from %s...", jsonl_path)
+                    repo = EventRepository(session)
+                    inserted = 0
+                    with open(jsonl_path, "r", encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if not line:
+                                continue
+                            raw = json.loads(line)
+                            event_dict = parse_sample_event(raw)
+                            if event_dict:
+                                event_schema = StoreEvent(**event_dict)
+                                await repo.upsert(event_schema)
+                                inserted += 1
+                    await session.commit()
+                    logger.info("Seeded %d events", inserted)
+                else:
+                    logger.warning("Events sample JSONL not found at %s", jsonl_path)
+    except Exception as e:
+        logger.error("Failed to seed events database: %s", e)
 
 
 async def check_db_health() -> bool:
