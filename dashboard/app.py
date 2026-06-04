@@ -853,7 +853,7 @@ def main():
             st.markdown(
                 f"**Surveillance Feed: {selected_cam_name}** | Target: `{selected_store_key}`"
             )
-        if video_path != "mock" and os.path.exists(video_path):
+        if video_path != "mock" and (video_path.startswith("http") or os.path.exists(video_path)):
             st.video(video_path)
         else:
             st.markdown(
