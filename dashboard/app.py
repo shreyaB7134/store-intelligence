@@ -560,9 +560,9 @@ def get_video_feeds() -> dict:
             "CAM 5 - billing": "https://youtu.be/i2A8GvGsU6I"
         },
         "ST1009": {
-            "entry 1": "https://youtube.com/shorts/GsZmI4jCBYE",
-            "entry 2": "https://youtube.com/shorts/QEPrpxw_V0w",
-            "billing area": "https://youtube.com/shorts/JjYiAtTcI88"
+            "entry 1": "https://youtu.be/GsZmI4jCBYE",
+            "entry 2": "https://youtu.be/QEPrpxw_V0w",
+            "billing area": "https://youtu.be/JjYiAtTcI88"
         }
     }
     return feeds
