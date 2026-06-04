@@ -18,7 +18,7 @@ def send_events(events):
 print("Starting infinite demo injection...", flush=True)
 
 while True:
-    for store_id in ["ST1008", "ST1009"]:
+    for store_id in ["ST1008", "ST1009", "STORE_BLR_002"]:
         print(f"Injecting for {store_id}...", flush=True)
         visitors = [f"DEM_{uuid.uuid4().hex[:4]}" for _ in range(5)]
         
@@ -66,7 +66,7 @@ while True:
         time.sleep(1)
     
     # Send an EXIT event for some visitors to show turnover
-    for store_id in ["ST1008", "ST1009"]:
+    for store_id in ["ST1008", "ST1009", "STORE_BLR_002"]:
         send_events([{
             "event_id": str(uuid.uuid4()),
             "store_id": store_id,

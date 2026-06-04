@@ -12,7 +12,7 @@ def send_events(events):
     except Exception as e:
         print(f"Failed to send: {e}")
 
-for store_id in ["ST1008", "ST1009"]:
+for store_id in ["ST1008", "ST1009", "STORE_BLR_002"]:
     print(f"Injecting data for {store_id}...")
     visitors = [f"DEM_{uuid.uuid4().hex[:4]}" for _ in range(5)]
 
