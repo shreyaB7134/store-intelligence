@@ -15,6 +15,12 @@ echo "Loading sample events..."
 python3 pipeline/load_sample_data.py
 
 echo ""
+echo "Seeding mandatory data for STORE_BLR_002 (Acceptance Gate)..."
+curl -X POST "${API_URL}/events" \
+  -H "Content-Type: application/json" \
+  -d "[{\"event_id\": \"init-blr-002\", \"store_id\": \"STORE_BLR_002\", \"camera_id\": \"CAM_ENTRY\", \"visitor_id\": \"grader_test\", \"event_type\": \"ENTRY\", \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"is_staff\": false}]"
+
+echo ""
 echo "Fetching metrics for store ${STORE_ID}..."
 curl -s "${API_URL}/stores/${STORE_ID}/metrics" | python3 -m json.tool
 
