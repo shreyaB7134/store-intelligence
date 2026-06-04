@@ -871,6 +871,7 @@ def main():
             )
 
     with col_ai_telemetry:
+        import math
         st.markdown(
             "<h5 style='color:#7c83fd; font-weight:700; margin-bottom:10px;'>AI Tracking Engine</h5>",
             unsafe_allow_html=True,
@@ -878,29 +879,37 @@ def main():
         ai_overlay = st.checkbox("Show AI Bounding Box Overlay", value=True)
 
         if ai_overlay:
-            # ── Stable, exact match simulation ──────────────────────────────
-            # Seed with the store + second so values change slowly (once/sec)
-            seed_val = int(time.time()) // 2
-            rng = random.Random(seed_val)
+            current_time = time.time()
 
-            # Base frame detection = exact occupancy from DB for entry cams
-            # (or current_occ for non-entry cams)
-            base_customers = entry_stats["customers_inside"] if is_entry_cam else current_occ
-            base_staff = entry_stats["staff_inside"] if is_entry_cam else 0
-
-            # Ensure exact match for recruiter demo (no random jitter)
-            detected_customers = base_customers
-            detected_staff = base_staff
+            # Override counts to match the visual contents of the YouTube videos
+            video_overrides = {
+                "CAM 1 - zone": {"c": 3, "s": 0},
+                "CAM 2 - zone": {"c": 4, "s": 1},
+                "CAM 3 - entry": {"c": 1, "s": 0},
+                "CAM 5 - billing": {"c": 2, "s": 2},
+                "entry 1": {"c": 1, "s": 0},
+                "entry 2": {"c": 2, "s": 0},
+                "billing area": {"c": 3, "s": 1}
+            }
+            
+            if selected_cam_name in video_overrides:
+                detected_customers = video_overrides[selected_cam_name]["c"]
+                detected_staff = video_overrides[selected_cam_name]["s"]
+            else:
+                detected_customers = entry_stats["customers_inside"] if is_entry_cam else current_occ
+                detected_staff = entry_stats["staff_inside"] if is_entry_cam else 0
+                
             total_tracks = detected_customers + detected_staff
 
-            mock_fps = round(rng.uniform(29.0, 30.5), 1)
-            mock_conf = round(rng.uniform(93.0, 97.5), 1)
+            mock_fps = round(random.uniform(29.0, 30.5), 1)
+            mock_conf = round(random.uniform(93.0, 97.5), 1)
 
             # Per-track confidence: customers ~89-97%, staff ~97-99%
             def stable_conf(track_id: int, is_staff_track: bool) -> str:
-                r2 = random.Random(seed_val * 31 + track_id)
-                low, high = (0.970, 0.995) if is_staff_track else (0.890, 0.975)
-                return f"{r2.uniform(low, high):.2%}"
+                # Add minor jitter to confidence
+                jitter = random.uniform(-0.01, 0.01)
+                base = 0.98 if is_staff_track else 0.94
+                return f"{(base + jitter):.2%}"
 
             ai_html = f"""
             <div style='background:rgba(30,25,50,0.5); border-radius:10px; padding:14px; border-left:3px solid #7c83fd; margin-bottom:10px;'>
@@ -910,23 +919,22 @@ def main():
                 <p style='margin:3px 0 0; font-size:0.8rem; color:#94a3b8;'>Customers: <strong style='color:#00ff66;'>{detected_customers}</strong> &nbsp; Staff: <strong style='color:#ffa500;'>{detected_staff}</strong></p>
             </div>
             """
-            st.markdown(ai_html.replace('\n', ''), unsafe_allow_html=True)
-
-            # Tracking coordinates table — one stable row per track
+            st.markdown(ai_html, unsafe_allow_html=True)
             st.markdown(
-                "<p style='font-size:0.72rem; color:#64748b; font-weight:700;"
-                " margin-bottom:4px; text-transform:uppercase;'"
-                ">Real-Time Bounding Box Telemetry</p>",
+                "<p style='font-size:0.72rem; color:#64748b; font-weight:700; margin-bottom:4px; text-transform:uppercase;'>Real-Time Bounding Box Telemetry</p>",
                 unsafe_allow_html=True,
             )
+
             box_data = []
             for i in range(detected_customers):
-                rng_t = random.Random(seed_val + i * 7)
                 trk_id = 101 + i
-                x = rng_t.randint(60, 520)
-                y = rng_t.randint(80, 460)
-                w = rng_t.randint(40, 90)
-                h = rng_t.randint(80, 180)
+                # Smooth movement using sine/cosine tied to current_time
+                speed = 0.3 + (i * 0.1)
+                x = int(350 + 200 * math.sin(current_time * speed + (i * 1.5)))
+                y = int(200 + 100 * math.cos(current_time * speed * 0.8 + (i * 2.0)))
+                w = int(65 + 15 * math.sin(current_time * 0.5 + i))
+                h = int(145 + 20 * math.cos(current_time * 0.5 + i))
+                
                 box_data.append({
                     "Track": f"TRK_{trk_id}",
                     "BBox [x,y,w,h]": f"[{x},{y},{w},{h}]",
@@ -934,10 +942,13 @@ def main():
                     "Class": "Customer",
                 })
             for j in range(detected_staff):
-                rng_s = random.Random(seed_val + j * 13 + 999)
-                x = rng_s.randint(300, 550)
-                y = rng_s.randint(100, 300)
-                w, h = rng_s.randint(45, 80), rng_s.randint(90, 170)
+                # Staff usually move slower or stand behind counters
+                speed = 0.15 + (j * 0.05)
+                x = int(500 + 100 * math.sin(current_time * speed + (j * 3.0)))
+                y = int(150 + 50 * math.cos(current_time * speed * 1.2 + (j * 1.5)))
+                w = int(70 + 10 * math.sin(current_time * 0.3 + j))
+                h = int(160 + 15 * math.cos(current_time * 0.3 + j))
+                
                 box_data.append({
                     "Track": f"STAFF_{j+1:02d}",
                     "BBox [x,y,w,h]": f"[{x},{y},{w},{h}]",
