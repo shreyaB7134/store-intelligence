@@ -91,3 +91,18 @@ async def test_store_level_deduplication(db_session):
     # Now it's explicitly exited
     occ_exit = await repo.get_current_occupancy(store_id)
     assert occ_exit == 0, "Occupancy should be 0 after explicit exit"
+    
+    # 5. Re-entry Event
+    t5 = t4 + timedelta(minutes=10)
+    ev5 = make_event(
+        event_type=EventType.ENTRY,
+        visitor_id=visitor_id,
+        store_id=store_id,
+        camera_id="CAM_ENTRY",
+        timestamp=t5
+    )
+    await repo.upsert(ev5)
+    
+    # Session should be reactivated
+    occ_reentry = await repo.get_current_occupancy(store_id)
+    assert occ_reentry == 1, "Occupancy should be 1 after reentry (session reactivated)"

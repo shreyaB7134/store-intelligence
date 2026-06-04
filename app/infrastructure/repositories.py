@@ -102,6 +102,7 @@ class EventRepository:
 
         if event.event_type == EventType.ENTRY:
             update_values["entry_time"] = func.coalesce(VisitorSession.entry_time, event.timestamp)
+            update_values["exit_time"] = None  # Reactivate session on re-entry
         elif event.event_type == EventType.EXIT:
             # Only set exit_time for actual store boundary exits
             update_values["exit_time"] = event.timestamp
