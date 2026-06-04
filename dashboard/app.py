@@ -646,7 +646,7 @@ def main():
     # --- KPI Row (Custom HTML/CSS) ---
     kpi_cols = st.columns(5)
     
-    if metrics and metrics.get("unique_visitors", 0) > 0:
+    if metrics and metrics.get("current_occupancy", 0) > 0:
         unique_visitors = metrics.get("unique_visitors", 0)
         conversion = metrics.get("conversion_rate", 0.0)
         dwell_ms = metrics.get("average_dwell_ms", 0.0)
