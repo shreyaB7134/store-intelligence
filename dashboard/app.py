@@ -550,35 +550,21 @@ def fetch(endpoint: str) -> Optional[dict]:
 # --- Video File Mapping ---
 def get_video_feeds() -> dict:
     """
-    Locates actual camera video files in the workspace directories.
-    Maps: Store_ID -> { Camera_Name: Absolute_Path_To_MP4 }
+    Returns mapped YouTube URLs for live demo streaming.
     """
-    store_1_dir = WORKSPACE_DIR / "Store 1"
-    store_2_dir = WORKSPACE_DIR / "Store 2"
-    
     feeds = {
-        "ST1008": {},
-        "ST1009": {}
+        "ST1008": {
+            "CAM 1 - zone": "https://youtu.be/BAsH-ZaojZ0",
+            "CAM 2 - zone": "https://youtu.be/HqJcqRpOLr0",
+            "CAM 3 - entry": "https://youtu.be/jo-hC3AwmJc",
+            "CAM 5 - billing": "https://youtu.be/i2A8GvGsU6I"
+        },
+        "ST1009": {
+            "entry 1": "https://youtube.com/shorts/GsZmI4jCBYE",
+            "entry 2": "https://youtube.com/shorts/QEPrpxw_V0w",
+            "billing area": "https://youtube.com/shorts/JjYiAtTcI88"
+        }
     }
-    
-    # Store 1 mapping
-    if store_1_dir.exists():
-        for f in store_1_dir.iterdir():
-            if f.suffix.lower() == ".mp4":
-                feeds["ST1008"][f.stem] = str(f.resolve())
-                
-    # Store 2 mapping
-    if store_2_dir.exists():
-        for f in store_2_dir.iterdir():
-            if f.suffix.lower() == ".mp4":
-                feeds["ST1009"][f.stem] = str(f.resolve())
-                
-    # Add generic mock fallbacks if files don't exist
-    if not feeds["ST1008"]:
-        feeds["ST1008"] = {"CCTV 1 - Entry": "mock", "CCTV 2 - Shelf": "mock"}
-    if not feeds["ST1009"]:
-        feeds["ST1009"] = {"CCTV 1 - Entrance": "mock", "CCTV 2 - Billing": "mock"}
-        
     return feeds
 
 
