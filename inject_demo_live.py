@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 API_URL = "https://store-intelligence.onrender.com"
-STORE_ID = "ST1008"
+STORE_ID = "ST1009"
 
 def send_events(events):
     try:

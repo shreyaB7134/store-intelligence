@@ -582,7 +582,8 @@ def main():
     selected_store_key = st.sidebar.selectbox(
         "Active Store Branch",
         options=list(store_options.keys()),
-        format_func=lambda x: store_options[x]
+        format_func=lambda x: store_options[x],
+        index=1
     )
     
     # Refresh rate
