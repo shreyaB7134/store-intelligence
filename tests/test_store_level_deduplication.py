@@ -8,7 +8,8 @@ from tests.conftest import make_event
 @pytest.mark.asyncio
 async def test_store_level_deduplication(db_session):
     repo = EventRepository(db_session)
-    store_id = "ST_TEST"
+    import uuid
+    store_id = f"ST_TEST_{uuid.uuid4().hex}"
     visitor_id = "V_100"
     
     t1 = datetime.now(timezone.utc)

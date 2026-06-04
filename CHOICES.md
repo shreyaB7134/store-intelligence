@@ -157,3 +157,26 @@ ByteTrack's key innovation: treats low-confidence detections as "second candidat
 ### Final Choice: PostgreSQL 16
 
 POS correlation requires joining events with transactions — a relational problem. PostgreSQL's composite indexes and window functions handle analytics queries efficiently enough for store-scale data volumes (< 100K events/day per store).
+
+---
+
+## Decision 7: Zone Classification Approach
+
+### Options Considered
+
+| Option | Pros | Cons |
+|---|---|---|
+| Rule-based (HSV + Polygons) | Deterministic, ultra-low latency, zero marginal cost | Requires manual initial configuration per camera |
+| Vision-Language Models (VLM) | Zero-shot layout understanding, dynamic adjustment | High latency (>1s), expensive per frame, non-deterministic |
+
+### AI Evaluation & Disagreement
+
+During the design phase, an AI architecture review suggested using a VLM (like GPT-4V or Claude 3 Vision) to dynamically classify zones (e.g., "Billing Counter", "Lipstick Aisle") from raw camera frames in real-time. 
+
+**Why we disagreed:**
+While the zero-shot spatial reasoning of VLMs is impressive, passing CCTV frames to a VLM for zone classification is fundamentally unsuited for a real-time tracking pipeline. It introduces massive latency (often >1-2 seconds per request), unpredictable non-deterministic boundaries, and exorbitant per-frame API costs. 
+
+### Final Choice: Rule-Based (HSV & Polygons)
+
+**Justification:**
+Instead of a VLM, we implemented deterministic polygonal boundary checks in `zone_manager.py` (e.g., `Point(x, y).within(polygon)`) and deterministic HSV color thresholding in `staff_classifier.py`. This executes in <1ms per frame directly on the edge device with zero recurring cloud API costs, satisfying the strict 10+ FPS performance requirement for the ByteTrack pipeline.

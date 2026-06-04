@@ -196,13 +196,22 @@ pytest tests/test_metrics.py -v
 pytest tests/test_anomalies.py -v
 ```
 
-## Running the Detection Pipeline
+## Running the Detection Pipeline (Edge Simulation)
+
+The computer vision pipeline runs **separately** from the `docker-compose` stack. This separation mimics a real-world Edge-to-Cloud architecture, where the heavy YOLOv8 processing runs on an edge device (e.g., a store PC) and streams lightweight JSON events to the centralized Intelligence API.
 
 ```bash
-# Install pipeline dependencies
+# Install pipeline dependencies (requires PyTorch)
 pip install -r requirements.pipeline.txt
 
-# Process a single video
+# Run ALL sample clips automatically to simulate a live store
+./pipeline/run.sh
+```
+
+*(Note: If you deployed the API to the cloud, simply set `export API_URL="https://your-app.com"` before executing `run.sh` to watch the events flow to your live dashboard!)*
+
+You can also run individual clips manually:
+```bash
 python -m pipeline.video_processor \
   --store-id ST1008 \
   --camera-id CAM1 \
