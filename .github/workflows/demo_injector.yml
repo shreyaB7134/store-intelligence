@@ -1,0 +1,27 @@
+name: Continuous Demo Injector
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  inject:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install httpx
+
+      - name: Run injection script
+        run: python inject_demo_live.py
+        env:
+          API_URL: https://store-intelligence.onrender.com
+        timeout-minutes: 5
