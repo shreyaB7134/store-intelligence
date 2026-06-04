@@ -261,7 +261,7 @@ def fetch_entry_exit_stats(store_id: str, camera_id: Optional[str] = None, fallb
 
         # Total ENTRY count
         cur.execute(
-            f"SELECT COUNT(*) FROM events WHERE store_id=? AND event_type='ENTRY'{cam_filter}",
+            f"SELECT COUNT(DISTINCT visitor_id) FROM events WHERE store_id=? AND event_type='ENTRY'{cam_filter}",
             params_base
         )
         defaults["total_entries"] = cur.fetchone()[0] or 0
@@ -272,7 +272,7 @@ def fetch_entry_exit_stats(store_id: str, camera_id: Optional[str] = None, fallb
 
         # Total EXIT count
         cur.execute(
-            f"SELECT COUNT(*) FROM events WHERE store_id=? AND event_type='EXIT'{cam_filter}",
+            f"SELECT COUNT(DISTINCT visitor_id) FROM events WHERE store_id=? AND event_type='EXIT'{cam_filter}",
             params_base
         )
         defaults["total_exits"] = cur.fetchone()[0] or 0
@@ -292,35 +292,27 @@ def fetch_entry_exit_stats(store_id: str, camera_id: Optional[str] = None, fallb
         defaults["unique_exits"] = cur.fetchone()[0] or 0
 
         # Customer ENTRY
-        cur.execute(
-            f"SELECT COUNT(*) FROM events WHERE store_id=? AND event_type='ENTRY' AND is_staff=0{cam_filter}",
-            params_base
-        )
-        defaults["customer_entries"] = cur.fetchone()[0] or 0
+        defaults["customer_entries"] = defaults["unique_entries"]
 
         # Customer EXIT
-        cur.execute(
-            f"SELECT COUNT(*) FROM events WHERE store_id=? AND event_type='EXIT' AND is_staff=0{cam_filter}",
-            params_base
-        )
-        defaults["customer_exits"] = cur.fetchone()[0] or 0
+        defaults["customer_exits"] = defaults["unique_exits"]
 
         # Staff ENTRY
         cur.execute(
-            f"SELECT COUNT(*) FROM events WHERE store_id=? AND event_type='ENTRY' AND is_staff=1{cam_filter}",
+            f"SELECT COUNT(DISTINCT visitor_id) FROM events WHERE store_id=? AND event_type='ENTRY' AND is_staff=1{cam_filter}",
             params_base
         )
         defaults["staff_entries"] = cur.fetchone()[0] or 0
 
         # Staff EXIT
         cur.execute(
-            f"SELECT COUNT(*) FROM events WHERE store_id=? AND event_type='EXIT' AND is_staff=1{cam_filter}",
+            f"SELECT COUNT(DISTINCT visitor_id) FROM events WHERE store_id=? AND event_type='EXIT' AND is_staff=1{cam_filter}",
             params_base
         )
         defaults["staff_exits"] = cur.fetchone()[0] or 0
 
-        # Currently inside: entries - exits (clamped >= 0)
-        defaults["customers_inside"] = max(0, defaults["customer_entries"] - defaults["customer_exits"])
+        # Currently inside: sync with API occupancy metric
+        defaults["customers_inside"] = fallback_occ
         defaults["staff_inside"] = max(0, defaults["staff_entries"] - defaults["staff_exits"])
         defaults["currently_inside"] = defaults["customers_inside"] + defaults["staff_inside"]
 
@@ -798,12 +790,12 @@ def main():
     db_cam_id = None  # We query across all cameras for the store-level stats
     entry_stats = fetch_entry_exit_stats(selected_store_key, db_cam_id, fallback_occ=current_occ)
 
-    # ==== ENTRY CAMERA: Full In/Out Panel ====
-    if is_entry_cam:
+    # ==== STORE-WIDE: Full In/Out Panel ====
+    if True:
         entry_html = f"""
         <div style='background: linear-gradient(135deg, rgba(30,25,60,0.7), rgba(15,12,30,0.9)); border: 1px solid rgba(124,131,253,0.25); border-radius: 16px; padding: 20px 28px; margin-bottom: 20px;'>
             <div style='font-size:0.78rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px;'>
-                📡 ENTRY CAMERA — REAL-TIME IN / OUT INTELLIGENCE
+                📡 STORE-WIDE — REAL-TIME IN / OUT INTELLIGENCE
             </div>
             <div style='display:grid; grid-template-columns: repeat(4, 1fr); gap:16px;'>
                 <div style='background:rgba(0,255,102,0.08); border:1px solid rgba(0,255,102,0.2); border-radius:12px; padding:16px; text-align:center;'>

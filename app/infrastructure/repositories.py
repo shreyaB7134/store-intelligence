@@ -78,12 +78,10 @@ class EventRepository:
         Keep the ``visitor_sessions`` table in sync whenever a new event
         arrives for a visitor.
 
-        * Inserts the session row if it does not yet exist (keyed on the
-          ``uq_visitor_store`` unique constraint).
-        * Updates ``entry_time`` / ``exit_time`` / ``visited_billing`` based
-          on the event type.
+        * Inserts the session row if it does not yet exist.
+        * Always updates ``last_seen_at``.
+        * Updates ``entry_time`` (only if null) / ``exit_time`` / ``visited_billing``.
         """
-        # Ensure the session row exists before we try to update it.
         insert_stmt = (
             pg_insert(VisitorSession)
             .values(
@@ -95,35 +93,27 @@ class EventRepository:
         )
         await self.session.execute(insert_stmt)
 
-        # Apply field-level updates based on the incoming event type.
         base_where = and_(
             VisitorSession.visitor_id == event.visitor_id,
             VisitorSession.store_id == event.store_id,
         )
 
+        update_values = {"last_seen_at": event.timestamp}
+
         if event.event_type == EventType.ENTRY:
-            await self.session.execute(
-                update(VisitorSession)
-                .where(base_where)
-                .values(entry_time=event.timestamp)
-            )
-
+            update_values["entry_time"] = func.coalesce(VisitorSession.entry_time, event.timestamp)
         elif event.event_type == EventType.EXIT:
-            await self.session.execute(
-                update(VisitorSession)
-                .where(base_where)
-                .values(exit_time=event.timestamp)
-            )
-
+            # Only set exit_time for actual store boundary exits
+            update_values["exit_time"] = event.timestamp
         elif event.event_type in (EventType.ZONE_ENTER, EventType.ZONE_DWELL):
-            # Mark the billing zone flag when the visitor steps into any zone
-            # whose ID contains "BILLING" (case-insensitive).
             if event.zone_id and "BILLING" in event.zone_id.upper():
-                await self.session.execute(
-                    update(VisitorSession)
-                    .where(base_where)
-                    .values(visited_billing=True)
-                )
+                update_values["visited_billing"] = True
+
+        await self.session.execute(
+            update(VisitorSession)
+            .where(base_where)
+            .values(**update_values)
+        )
 
     # ------------------------------------------------------------------
     # Feed-health queries
@@ -223,14 +213,14 @@ class EventRepository:
         window_start = now - timedelta(minutes=15)
 
         joins_result = await self.session.execute(
-            select(func.count(EventRecord.id)).where(
+            select(func.count(distinct(EventRecord.visitor_id))).where(
                 EventRecord.store_id == store_id,
                 EventRecord.event_type == EventType.BILLING_QUEUE_JOIN.value,
                 EventRecord.timestamp >= window_start,
             )
         )
         abandons_result = await self.session.execute(
-            select(func.count(EventRecord.id)).where(
+            select(func.count(distinct(EventRecord.visitor_id))).where(
                 EventRecord.store_id == store_id,
                 EventRecord.event_type == EventType.BILLING_QUEUE_ABANDON.value,
                 EventRecord.timestamp >= window_start,
@@ -406,13 +396,15 @@ class EventRepository:
     async def get_current_occupancy(self, store_id: str) -> int:
         """
         Return the count of visitors currently in the store.
-        Calculated as the number of visitor sessions that have an entry_time
-        and no exit_time.
+        Calculated as the number of visitor sessions that have an entry_time,
+        no exit_time, AND have been seen within the last 30 minutes.
         """
+        timeout_threshold = datetime.now(timezone.utc) - timedelta(minutes=30)
         q = select(func.count(VisitorSession.id)).where(
             VisitorSession.store_id == store_id,
             VisitorSession.entry_time.isnot(None),
             VisitorSession.exit_time.is_(None),
+            VisitorSession.last_seen_at >= timeout_threshold,
             VisitorSession.is_staff == False,  # noqa: E712
         )
         result = await self.session.execute(q)
