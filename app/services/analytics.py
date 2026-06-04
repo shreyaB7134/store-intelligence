@@ -27,6 +27,7 @@ async def get_store_metrics(
     unique_visitors = await repo.get_unique_visitor_count(store_id, since=since, until=until)
     avg_dwell = await repo.get_average_dwell(store_id, since=since)
     queue_depth = await repo.get_queue_depth(store_id)
+    current_occupancy = await repo.get_current_occupancy(store_id)
 
     # Abandonment rate
     joins = await repo.count_events_by_type(store_id, EventType.BILLING_QUEUE_JOIN, since=since)
@@ -48,6 +49,7 @@ async def get_store_metrics(
         average_dwell_ms=round(avg_dwell, 2),
         queue_depth=queue_depth,
         abandonment_rate=round(abandonment_rate, 4),
+        current_occupancy=current_occupancy,
     )
 
 

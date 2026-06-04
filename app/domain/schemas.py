@@ -60,6 +60,7 @@ class MetricsResponse(BaseModel):
     average_dwell_ms: float
     queue_depth: int
     abandonment_rate: float
+    current_occupancy: int
 
 
 class FunnelStage(BaseModel):

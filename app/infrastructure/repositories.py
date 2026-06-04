@@ -403,6 +403,21 @@ class EventRepository:
         )
         return billing_visitors / entries
 
+    async def get_current_occupancy(self, store_id: str) -> int:
+        """
+        Return the count of visitors currently in the store.
+        Calculated as the number of visitor sessions that have an entry_time
+        and no exit_time.
+        """
+        q = select(func.count(VisitorSession.id)).where(
+            VisitorSession.store_id == store_id,
+            VisitorSession.entry_time.isnot(None),
+            VisitorSession.exit_time.is_(None),
+            VisitorSession.is_staff == False,  # noqa: E712
+        )
+        result = await self.session.execute(q)
+        return result.scalar_one() or 0
+
 
 # ---------------------------------------------------------------------------
 # POSRepository

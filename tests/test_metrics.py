@@ -141,6 +141,7 @@ async def test_metrics_response_schema(client):
         "average_dwell_ms",
         "queue_depth",
         "abandonment_rate",
+        "current_occupancy",
     ]
     for field in required_fields:
         assert field in data, f"Missing required field in response: {field}"
