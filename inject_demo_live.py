@@ -7,7 +7,7 @@ API_URL = "https://store-intelligence.onrender.com"
 
 def send_events(events):
     try:
-        r = httpx.post(f"{API_URL}/events/ingest", json={"events": events}, timeout=60.0)
+        r = httpx.post(f"{API_URL}/events/ingest", json={"events": events}, timeout=180.0)
         print(f"Sent {len(events)} events: {r.status_code}")
     except Exception as e:
         print(f"Failed to send: {e}")

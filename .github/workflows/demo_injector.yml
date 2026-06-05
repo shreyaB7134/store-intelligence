@@ -24,4 +24,4 @@ jobs:
         run: python inject_demo_live.py
         env:
           API_URL: https://store-intelligence.onrender.com
-        timeout-minutes: 5
+        timeout-minutes: 10
